@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Carter Clash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ea; --ink:#22201c; --muted:#8c877d; --panel:#fff; --line:#e6e0d4; --edge:#ddd5c5;
+  --blue:#3f7bf2; --blue-d:#2c5fcc; --red:#ec5a52; --red-d:#c8413a;
+  --vibe:#b45cf0; --vibe-d:#8a3bc9; --vibe-soft:#efe3fb;
+  --gold:#ffc83a; --gold-d:#e0961a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:'Fredoka',system-ui,sans-serif;display:flex;justify-content:center;
+  user-select:none;-webkit-user-select:none;touch-action:none;overflow:hidden}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+#app{width:100%;max-width:440px;height:100%;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column}
+.hide{display:none!important}
+
+/* ---------- shared bits ---------- */
+.avatar{width:34px;height:34px;border-radius:50%;background:url(carter.jpg) 50% 52%/150% auto;border:3px solid var(--blue);flex:none}
+.avatar.evil{border-color:var(--red);filter:sepia(.45) hue-rotate(-25deg) saturate(1.7)}
+.avatar.big{width:46px;height:46px}
+.btn{border-radius:16px;font-weight:700;padding:12px 26px;font-size:17px;transition:transform .08s;position:relative;
+  text-shadow:0 1px 0 rgba(0,0,0,.18)}
+.btn:active{transform:translateY(2px)}
+.btn.yellow{background:linear-gradient(#ffdc55,#ffbb22);color:#5a3a00;box-shadow:0 4px 0 var(--gold-d),0 10px 22px -10px var(--gold-d);text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.btn.blue{background:linear-gradient(#5f93ff,#3f7bf2);color:#fff;box-shadow:0 4px 0 var(--blue-d)}
+.btn.ghost{background:#fff;box-shadow:0 3px 0 var(--edge);color:var(--ink);text-shadow:none}
+.panel{background:var(--panel);border-radius:20px;box-shadow:0 3px 0 var(--edge);padding:12px}
+.panel-h{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:15px;margin-bottom:10px}
+.panel-h small{color:var(--muted);font-weight:500;font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border-radius:999px;padding:4px 10px 4px 8px;font-weight:700;box-shadow:0 2px 0 var(--edge)}
+
+/* ---------- cards ---------- */
+.common{--rc:#9aaabb;--rc2:#7f90a3;--rbg:#eef2f6}
+.rare{--rc:#f5a33a;--rc2:#d9831a;--rbg:#fff1dc}
+.epic{--rc:#ad62f2;--rc2:#8b40d2;--rbg:#f3e8fe}
+.legendary{--rc:#1fc2b0;--rc2:#0f9d8e;--rbg:#ddf7f3}
+.card{background:linear-gradient(var(--rc),var(--rc2));border-radius:13px;padding:3px 3px 0;position:relative;box-shadow:0 3px 0 rgba(0,0,0,.14);
+  transition:transform .12s, filter .12s;cursor:pointer}
+.legendary.card{background:linear-gradient(135deg,#ffd76a,#1fc2b0 45%,#a46cf5)}
+.card .art{border-radius:10px;aspect-ratio:1/1.08;background:radial-gradient(circle at 50% 40%,#fff,var(--rbg) 70%);position:relative;overflow:hidden}
+.face{background:url(carter.jpg) 50% 52%/150% auto}
+.card .face{position:absolute;left:14%;right:14%;top:9%;aspect-ratio:1;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.card .ico{position:absolute;right:5%;bottom:4%;font-size:clamp(14px,4.4vw,19px);line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.card .nm{color:#fff;font-weight:600;font-size:clamp(9.5px,2.7vw,11.5px);text-align:center;padding:2px 0 4px;text-shadow:0 1px 1px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cost{position:absolute;top:-8px;left:-6px;width:24px;height:24px;border-radius:50% 50% 50% 12%;transform:rotate(-45deg);
+  background:radial-gradient(circle at 35% 30%,#e3b6ff,var(--vibe) 60%,var(--vibe-d));display:grid;place-items:center;box-shadow:0 2px 0 rgba(0,0,0,.15);z-index:2}
+.cost b{transform:rotate(45deg);color:#fff;font-size:13px;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.card .lock{position:absolute;inset:0;background:rgba(40,36,30,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:20px}
+.card .lock small{font-size:9px;font-weight:600;margin-top:2px;text-align:center;padding:0 4px;line-height:1.1}
+.card .tag{position:absolute;top:4px;right:4px;background:var(--blue);color:#fff;font-size:8.5px;font-weight:700;border-radius:6px;padding:1px 4px}
+.card.dim{filter:saturate(.4) opacity(.7)}
+.wiggle .card{animation:wig .35s ease-in-out infinite alternate}
+@keyframes wig{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}
+
+/* ---------- home ---------- */
+#home{padding:12px 16px 0;gap:12px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.me{display:flex;align-items:center;gap:10px}
+.me .nm{font-weight:700;font-size:18px;line-height:1}
+.me .lvl{font-size:12px;color:var(--muted);margin-top:2px}
+.tabs{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:12px}
+.tab{display:flex;flex-direction:column;gap:12px}
+.arena-card{border-radius:24px;padding:16px;text-align:center;position:relative;overflow:hidden;color:#fff;
+  background:linear-gradient(160deg,var(--a1),var(--a2));box-shadow:0 4px 0 var(--a3)}
+.arena-art{height:170px;display:grid;place-items:center;position:relative}
+.arena-art .hero{width:128px;height:128px;border-radius:50%;background:url(carter.jpg) 50% 50%/130% auto;border:5px solid #fff;
+  box-shadow:0 14px 30px -12px rgba(0,0,0,.45);animation:bob 2.6s ease-in-out infinite}
+.arena-art .deco{position:absolute;font-size:30px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-3deg)}}
+.arena-lbl{font-size:12px;font-weight:600;opacity:.85;letter-spacing:.5px;text-transform:uppercase}
+.arena-name{font-size:24px;font-weight:700;text-shadow:0 2px 0 rgba(0,0,0,.15);margin-bottom:10px}
+.prog{height:12px;border-radius:99px;background:rgba(255,255,255,.35);overflow:hidden}
+.prog i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .5s}
+.prog-lbl{font-size:12px;margin-top:6px;font-weight:600;opacity:.95}
+#play{font-size:22px;padding:16px;width:100%}
+.deck-peek{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.deck-peek .card .nm{display:none}
+.deck-peek .card .cost{width:18px;height:18px;top:-5px;left:-4px}
+.deck-peek .card .cost b{font-size:10px}
+.deck-peek .card .ico{font-size:12px}
+.statline{display:flex;justify-content:space-around;color:var(--muted);font-size:13px}
+.statline b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 8px;padding-top:6px}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0 12px;background:var(--bg)}
+.nav button{background:#fff;border-radius:16px;padding:8px;font-size:20px;display:flex;flex-direction:column;align-items:center;box-shadow:0 3px 0 var(--edge)}
+.nav button span{font-size:12px;font-weight:600;color:var(--muted)}
+.nav button.on{background:linear-gradient(#5f93ff,#3f7bf2);box-shadow:0 3px 0 var(--blue-d)}
+.nav button.on span{color:#fff}
+.hint{font-size:12.5px;color:var(--muted);text-align:center}
+.swapbar{background:var(--blue);color:#fff;border-radius:14px;padding:10px 12px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.swapbar button{color:#fff;background:rgba(255,255,255,.2);border-radius:10px;padding:4px 10px;font-weight:600}
+
+/* ---------- sheet ---------- */
+.sheet{position:absolute;inset:0;background:rgba(34,32,28,.4);display:flex;align-items:flex-end;z-index:20;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.sheet-card{background:var(--bg);width:100%;border-radius:26px 26px 0 0;padding:18px 18px 22px;animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(40px)}}
+.sheet-top{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:start}
+.sheet h3{font-size:22px;line-height:1.1}
+.rar{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--rc2)}
+.sheet p{color:#5c574e;font-size:14px;line-height:1.4;margin-top:6px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.stat{background:#fff;border-radius:12px;padding:8px 10px;box-shadow:0 2px 0 var(--edge)}
+.stat small{display:block;font-size:11px;color:var(--muted)}
+.stat b{font-size:15px}
+.sheet-btns{display:flex;gap:10px}
+.sheet-btns .btn{flex:1}
+
+/* ---------- battle ---------- */
+#battle{padding:8px 12px 12px;gap:7px;background:linear-gradient(#bfe8ff,#e8f7ff 45%,#f4f1ea)}
+.bbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.who{display:flex;align-items:center;gap:8px}
+.who .nm{font-weight:700;font-size:15px;line-height:1.05}
+.who .sub{font-size:11px;color:var(--muted)}
+.crw{display:flex;gap:2px;font-size:16px}
+.crw span{filter:grayscale(1) opacity(.25);transition:.3s}
+.crw span.on{filter:none;transform:scale(1.15)}
+.timer{background:#fff;border-radius:12px;padding:3px 10px;text-align:center;box-shadow:0 2px 0 var(--edge);min-width:70px}
+.timer small{display:block;font-size:9.5px;color:var(--muted);font-weight:600;line-height:1.2}
+.timer b{font-size:17px;font-variant-numeric:tabular-nums;line-height:1.1}
+.timer.fast b{color:var(--vibe)}
+.timer.ot{background:var(--red);box-shadow:0 2px 0 var(--red-d)}
+.timer.ot b,.timer.ot small{color:#fff}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+canvas{display:block;border-radius:22px;box-shadow:0 0 0 4px #fff,0 6px 0 4px rgba(40,90,140,.18),0 18px 34px -16px rgba(30,70,120,.45)}
+#banner{position:absolute;left:0;right:0;top:42%;text-align:center;font-size:32px;font-weight:700;color:#fff;pointer-events:none;
+  text-shadow:0 3px 0 rgba(0,0,0,.25),0 0 22px rgba(0,0,0,.2);opacity:0;-webkit-text-stroke:1px rgba(0,0,0,.15)}
+#banner.show{animation:ban 1.8s ease-out}
+@keyframes ban{0%{opacity:0;transform:scale(.5)}12%{opacity:1;transform:scale(1.08)}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
+.emote-btn{width:36px;height:36px;border-radius:12px;background:#fff;box-shadow:0 2px 0 var(--edge);font-size:18px}
+.emotes{position:absolute;bottom:170px;left:12px;background:#fff;border-radius:16px;padding:8px;display:grid;grid-template-columns:repeat(5,40px);gap:6px;box-shadow:0 3px 0 var(--edge),0 10px 30px -10px rgba(0,0,0,.3);z-index:6}
+.emotes button{font-size:22px;height:40px;border-radius:10px;background:var(--bg)}
+.emotes button.txt{font-size:10px;font-weight:700}
+.energy{display:flex;align-items:center;gap:8px}
+.drop{width:30px;height:30px;border-radius:50% 50% 50% 12%;transform:rotate(-45deg);background:radial-gradient(circle at 35% 30%,#e3b6ff,var(--vibe) 60%,var(--vibe-d));display:grid;place-items:center;flex:none}
+.drop b{transform:rotate(45deg);color:#fff;font-size:15px;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.pips{flex:1;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;height:14px;background:#fff;padding:2px;border-radius:8px;box-shadow:0 2px 0 var(--edge)}
+.pip{background:var(--vibe-soft);border-radius:4px;overflow:hidden;position:relative}
+.pip i{position:absolute;inset:0;background:linear-gradient(#cf8bff,var(--vibe));transform-origin:left;transform:scaleX(0)}
+.hand{display:grid;grid-template-columns:46px repeat(4,1fr);gap:7px;align-items:end}
+.next{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);font-weight:600}
+.next .card{width:44px;pointer-events:none}
+.next .card .nm,.next .card .cost{display:none}
+.next .card .ico{font-size:12px}
+.hand .card.sel{transform:translateY(-10px) scale(1.04);box-shadow:0 0 0 3px #fff,0 10px 20px -8px rgba(0,0,0,.4)}
+.hand .card.poor .art{filter:grayscale(.85) brightness(.9)}
+.hand .card.poor .cost{filter:grayscale(.6)}
+
+/* ---------- overlays ---------- */
+.overlay{position:absolute;inset:0;background:rgba(244,241,234,.95);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;z-index:10}
+.result{font-size:46px;font-weight:700;-webkit-text-stroke:1px rgba(0,0,0,.08);text-shadow:0 3px 0 rgba(0,0,0,.12)}
+.result.win{color:var(--blue)} .result.lose{color:var(--red)} .result.draw{color:var(--muted)}
+.end-hero{width:120px;height:120px;border-radius:50%;background:url(carter.jpg) 50% 50%/130% auto;border:5px solid #fff;box-shadow:0 0 0 3px var(--blue),0 18px 40px -16px rgba(0,0,0,.5);animation:bob 2.4s ease-in-out infinite}
+.end-crowns{display:flex;gap:28px;align-items:center}
+.end-crowns .side{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+.end-crowns .crw{font-size:30px}
+.end-crowns .vs{font-weight:700;color:var(--muted)}
+.trophy-delta{font-size:24px;font-weight:700}
+.unlock{background:#fff;border-radius:16px;padding:10px 14px;box-shadow:0 3px 0 var(--edge);font-size:14px;max-width:300px}
+.unlock b{color:var(--vibe)}
+.quip{color:var(--muted);max-width:280px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <section class="screen" id="home">
+    <div class="top">
+      <div class="me"><div class="avatar big"></div><div><div class="nm">Carter</div><div class="lvl" id="hLvl">Arena 1</div></div></div>
+      <div class="chip">🏆 <span id="hTrophies">0</span></div>
+    </div>
+    <div class="tabs">
+      <div class="tab" id="tabBattle">
+        <div class="arena-card" id="arenaCard">
+          <div class="arena-lbl" id="arenaLbl">Arena 1</div>
+          <div class="arena-art"><div class="hero"></div><span class="deco" id="deco1" style="left:12%;top:18%"></span><span class="deco" id="deco2" style="right:12%;bottom:14%;animation-delay:-1.2s"></span></div>
+          <div class="arena-name" id="arenaName"></div>
+          <div class="prog"><i id="arenaProg"></i></div>
+          <div class="prog-lbl" id="arenaProgLbl"></div>
+        </div>
+        <button class="btn yellow" id="play">⚔️ Battle</button>
+        <div class="panel">
+          <div class="panel-h">Your deck <small id="avgCost1"></small></div>
+          <div class="deck-peek" id="deckPeek"></div>
+        </div>
+        <div class="statline"><span>Wins <b id="sWins">0</b></span><span>Losses <b id="sLoss">0</b></span><span>Best 🏆 <b id="sBest">0</b></span></div>
+      </div>
+      <div class="tab hide" id="tabDeck">
+        <div class="swapbar hide" id="swapbar"><span id="swapTxt"></span><button id="swapCancel">Cancel</button></div>
+        <div class="panel" id="deckPanel">
+          <div class="panel-h">Battle deck <small id="avgCost2"></small></div>
+          <div class="grid" id="deckGrid"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h">Collection <small id="collCount"></small></div>
+          <div class="grid" id="collGrid"></div>
+        </div>
+        <p class="hint">Tap a card to see its stats. Win battles to earn 🏆 and unlock new Carters.</p>
+      </div>
+    </div>
+    <nav class="nav"><button class="on" data-tab="battle">⚔️<span>Battle</span></button><button data-tab="deck">🃏<span>Deck</span></button></nav>
+  </section>
+
+  <!-- BATTLE -->
+  <section class="screen hide" id="battle">
+    <div class="bbar">
+      <div class="who"><div class="avatar evil"></div><div><div class="nm">Evil Carter</div><div class="crw" id="eCrw"><span>👑</span><span>👑</span><span>👑</span></div></div></div>
+      <div class="timer" id="timer"><small id="timerLbl">Time left</small><b id="timerVal">3:00</b></div>
+    </div>
+    <div id="stage"><canvas id="cv"></canvas><div id="banner"></div></div>
+    <div class="bbar">
+      <div class="who"><div class="avatar"></div><div><div class="nm">You</div><div class="crw" id="pCrw"><span>👑</span><span>👑</span><span>👑</span></div></div></div>
+      <button class="emote-btn" id="emoteBtn">💬</button>
+    </div>
+    <div class="emotes hide" id="emotes"></div>
+    <div class="energy"><div class="drop"><b id="eNum">5</b></div><div class="pips" id="pips"></div></div>
+    <div class="hand" id="hand"></div>
+  </section>
+
+  <!-- END -->
+  <div class="overlay hide" id="end">
+    <div class="result" id="result">Victory</div>
+    <div class="end-hero" id="endHero"></div>
+    <div class="end-crowns">
+      <div class="side"><div class="crw" id="endP"></div>You</div>
+      <div class="vs">vs</div>
+      <div class="side"><div class="crw" id="endE"></div>Evil Carter</div>
+    </div>
+    <div class="trophy-delta" id="tDelta">🏆 +30</div>
+    <div class="unlock hide" id="unlock"></div>
+    <p class="quip" id="quip"></p>
+    <button class="btn yellow" id="endOk">OK</button>
+  </div>
+
+  <!-- CARD SHEET -->
+  <div class="sheet hide" id="sheet"><div class="sheet-card" id="sheetCard"></div></div>
+</div>
+
+<script>
+// =================== DATA ===================
+const W = 360, H = 600, RIVER = 300, BAND = 14, BRIDGES = [80, 280], BRIDGE_HALF = 17;
+const COLORS = { p: '#2f7bff', e: '#ff4d4d' };
+const DARK = { p: '#1a55c9', e: '#c92f2f' };
+
+const ARENAS = [
+  { name: "Carter's Backyard", min: 0,   deco: ['🌳', '🌼'], grass: ['#93dc6b', '#87d35f'], tuft: '#69bd45', path: '#f8e3a3', pathEdge: '#e5c674',
+    river: ['#6ad8ff', '#2fb0f5'], bank: '#c99f5f', ui: ['#7cc56b', '#4fa25b', '#3d8448'] },
+  { name: "Carter's Garage",   min: 100, deco: ['🛞', '🧰'], grass: ['#d8e5f1', '#ccdbea'], tuft: '#b0c2d6', path: '#ffd970', pathEdge: '#efbd3a',
+    river: ['#74e3ff', '#38b8ee'], bank: '#8fa3b9', ui: ['#8da2b8', '#61758c', '#4b5d72'] },
+  { name: 'Carter Stadium',    min: 250, deco: ['🏟️', '📣'], grass: ['#7fe06a', '#6fd55a'], tuft: '#52bb40', path: '#fff3cf', pathEdge: '#f0d68a',
+    river: ['#5fcbff', '#2a9cf0'], bank: '#e2c98c', ui: ['#f7a64a', '#e8743a', '#c55a28'] },
+  { name: 'Planet Carter',     min: 450, deco: ['🪐', '⭐'], grass: ['#c9b0ff', '#bda1ff'], tuft: '#a080f2', path: '#ffdaf3', pathEdge: '#f4b2e1',
+    river: ['#8cf2ff', '#4fc8ff'], bank: '#9a80e3', ui: ['#9f7cf2', '#6e54d6', '#5640ae'] },
+];
+
+// what each Carter carries
+const GEAR = {
+  carter: { hand: '🗡️' }, archer: { hand: '🏹' }, mini: { hand: '🗡️' }, kami: { hand: '🧨' }, turbo: { hand: '⚡', hat: '🧢' },
+  big: { hand: '👊' }, healer: { hand: '🍪', hat: '⛑️' }, sky: {}, mob: { hand: '🦴' }, wizard: { hand: '🪄', hat: '🎩' },
+  balloon: {}, shield: { hand: '🛡️', hat: '🪖' }, golden: { hand: '⚔️', hat: '👑' }, sniper: { hand: '🔭', hat: '🧢' },
+};
+
+// fixed grass tufts so the board doesn't shimmer
+const TUFTS = (() => { let s = 7; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280, out = [];
+  while (out.length < 80) { const x = 8 + rnd() * (W - 16), y = 8 + rnd() * (H - 16);
+    if (Math.abs(y - RIVER) > BAND + 8 && !BRIDGES.some(b => Math.abs(x - b) < 18)) out.push([x, y]); }
+  return out; })();
+
+const MINI = { hp: 95, dmg: 42, rate: 1, speed: 62, range: 12, r: 8, sight: 110 };
+const CARDS = {
+  carter:  { name: 'Carter', short: 'Carter', cost: 3, icon: '🗡️', rarity: 'common', arena: 0, count: 1,
+             desc: 'The original. A sturdy all-rounder who hits hard up close.',
+             s: { hp: 650, dmg: 95, rate: 1.1, speed: 44, range: 16, r: 13, sight: 120 } },
+  archer:  { name: 'Archer Carters', short: 'Archers', cost: 3, icon: '🏹', rarity: 'common', arena: 0, count: 2,
+             desc: 'Two Carters with bows. They can shoot flying units.',
+             s: { hp: 230, dmg: 55, rate: 1.1, speed: 44, range: 105, r: 10, sight: 130, ranged: true, hitsAir: true } },
+  squad:   { name: 'Carter Squad', short: 'Squad', cost: 2, icon: '👥', rarity: 'common', arena: 0, count: 4,
+             desc: 'Four tiny, speedy Carters. Cheap and great at swarming.', s: MINI },
+  kami:    { name: 'Kamikaze Carter', short: 'Kamikaze', cost: 1, icon: '🧨', rarity: 'common', arena: 0, count: 1,
+             desc: 'Sprints at the nearest enemy and explodes on contact. Hits air too.',
+             s: { hp: 120, dmg: 170, rate: 1, speed: 120, range: 10, r: 9, sight: 160, kamikaze: 32, hitsAir: true } },
+  cannon:  { name: 'Carter Cannon', short: 'Cannon', cost: 3, icon: '🎯', rarity: 'common', arena: 0, kind: 'building', count: 1,
+             desc: 'Defensive building. Shoots ground units and lures them away from your towers. Lasts 30s.',
+             s: { hp: 750, dmg: 85, rate: 0.9, speed: 0, range: 115, r: 15, ranged: true, building: true, life: 30 } },
+  turbo:   { name: 'Turbo Carter', short: 'Turbo', cost: 4, icon: '⚡', rarity: 'rare', arena: 0, count: 1,
+             desc: 'Had three energy drinks. Very fast, hits very hard.',
+             s: { hp: 780, dmg: 170, rate: 1.3, speed: 82, range: 16, r: 13, sight: 120 } },
+  big:     { name: 'Big Carter', short: 'Big', cost: 5, icon: '💪', rarity: 'rare', arena: 0, count: 1,
+             desc: 'Huge and slow. Ignores troops and walks straight at buildings and towers.',
+             s: { hp: 2400, dmg: 150, rate: 1.5, speed: 26, range: 18, r: 19, buildingsOnly: true } },
+  bomb:    { name: 'Carter Bomb', short: 'Bomb', cost: 4, icon: '💥', rarity: 'rare', arena: 0, spell: 'bomb', radius: 55, dmg: 330, towerDmg: 130,
+             desc: 'A Carter falls from the sky and explodes. Damages everything in the area.' },
+  nap:     { name: 'Carter Nap', short: 'Nap', cost: 2, icon: '💤', rarity: 'rare', arena: 0, spell: 'nap', radius: 62, dur: 2.8, dmg: 40,
+             desc: 'Puts every enemy in the area, towers included, to sleep for a few seconds.' },
+  healer:  { name: 'Healer Carter', short: 'Healer', cost: 4, icon: '💚', rarity: 'rare', arena: 1, count: 1,
+             desc: 'Throws snacks at enemies and heals nearby Carters every second.',
+             s: { hp: 520, dmg: 45, rate: 1.2, speed: 44, range: 90, r: 12, sight: 130, ranged: true, hitsAir: true, heal: 55 } },
+  sky:     { name: 'Sky Carters', short: 'Sky', cost: 3, icon: '🪽', rarity: 'rare', arena: 1, count: 3,
+             desc: 'Three flying Carters. Ground troops that only melee cannot hit them.',
+             s: { hp: 140, dmg: 52, rate: 1, speed: 60, range: 22, r: 9, sight: 130, air: true, hitsAir: true } },
+  factory: { name: 'Carter Factory', short: 'Factory', cost: 4, icon: '🏭', rarity: 'rare', arena: 1, kind: 'building', count: 1,
+             desc: 'Builds a mini Carter every 3 seconds. Releases two more when destroyed. Lasts 35s.',
+             s: { hp: 900, dmg: 0, rate: 0, speed: 0, range: 0, r: 15, building: true, life: 35, spawnEvery: 3.2, deathSpawn: 2 } },
+  mob:     { name: 'Carter Mob', short: 'Mob', cost: 3, icon: '🧟', rarity: 'epic', arena: 1, count: 10,
+             desc: 'Ten fragile Carters. Shreds big targets, melts to splash damage.',
+             s: { hp: 60, dmg: 36, rate: 1, speed: 60, range: 12, r: 7, sight: 110 } },
+  wizard:  { name: 'Wizard Carter', short: 'Wizard', cost: 5, icon: '🧙', rarity: 'epic', arena: 2, count: 1,
+             desc: 'Throws magic that damages everything around the target, including flyers.',
+             s: { hp: 560, dmg: 115, rate: 1.4, speed: 42, range: 100, r: 12, sight: 130, ranged: true, hitsAir: true, splash: 32 } },
+  balloon: { name: 'Balloon Carter', short: 'Balloon', cost: 5, icon: '🎈', rarity: 'epic', arena: 2, count: 1,
+             desc: 'Floats to buildings and drops heavy hits. Pops with a bang when destroyed.',
+             s: { hp: 1150, dmg: 420, rate: 2.6, speed: 36, range: 10, r: 15, air: true, buildingsOnly: true, deathDmg: 160 } },
+  hype:    { name: 'Carter Hype', short: 'Hype', cost: 2, icon: '🔥', rarity: 'epic', arena: 2, spell: 'hype', radius: 70, dur: 6,
+             desc: 'Hypes up your Carters in the area: 40% faster moving and attacking for 6s.' },
+  shield:  { name: 'Shield Carter', short: 'Shield', cost: 4, icon: '🛡️', rarity: 'epic', arena: 2, count: 1,
+             desc: 'Carries a shield that soaks damage first. His swing hits a small area.',
+             s: { hp: 560, shield: 450, dmg: 110, rate: 1.2, speed: 48, range: 16, r: 13, sight: 120, splash: 28 } },
+  golden:  { name: 'Golden Carter', short: 'Golden', cost: 7, icon: '👑', rarity: 'legendary', arena: 3, count: 1,
+             desc: 'The ultimate Carter. Massive health and damage. Three minis burst out when he falls.',
+             s: { hp: 3300, dmg: 230, rate: 1.6, speed: 30, range: 18, r: 21, sight: 120, deathSpawn: 3, gold: true } },
+  sniper:  { name: 'Sniper Carter', short: 'Sniper', cost: 4, icon: '🔭', rarity: 'legendary', arena: 3, count: 1,
+             desc: 'Hits from very far away with huge single shots. Fragile up close.',
+             s: { hp: 380, dmg: 240, rate: 2.2, speed: 40, range: 165, r: 11, sight: 170, ranged: true, hitsAir: true } },
+};
+const ALL = Object.keys(CARDS);
+const DEFAULT_DECK = ['carter', 'archer', 'squad', 'kami', 'cannon', 'turbo', 'big', 'bomb'];
+const EMOTES = ['😂', '👍', '😤', '🥲', '😎', '🤯', '🙏', '💀', 'CARTER!', 'GG'];
+const AI_LEVEL = [
+  { think: 1.3, save: 7.5, regen: 0.9 },
+  { think: 1.0, save: 7,   regen: 1.0 },
+  { think: 0.8, save: 6.5, regen: 1.06 },
+  { think: 0.6, save: 6,   regen: 1.14 },
+];
+
+// =================== SAVE ===================
+const save = { trophies: 0, best: 0, wins: 0, losses: 0, deck: DEFAULT_DECK.slice() };
+try { Object.assign(save, JSON.parse(localStorage.getItem('carterClash') || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem('carterClash', JSON.stringify(save)); } catch (e) {} };
+const arenaIdx = (t = save.trophies) => ARENAS.reduce((a, ar, i) => t >= ar.min ? i : a, 0);
+const unlocked = k => CARDS[k].arena <= arenaIdx();
+if (!Array.isArray(save.deck) || new Set(save.deck).size !== 8 || !save.deck.every(k => CARDS[k] && unlocked(k))) save.deck = DEFAULT_DECK.slice();
+
+// =================== HELPERS ===================
+const $ = id => document.getElementById(id);
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const avgCost = d => (d.reduce((s, k) => s + CARDS[k].cost, 0) / d.length).toFixed(1);
+const nearestBridge = x => BRIDGES.reduce((a, b) => Math.abs(b - x) < Math.abs(a - x) ? b : a);
+
+function cardHTML(k, { cls = '', lock = false, tag = '', attrs = '' } = {}) {
+  const c = CARDS[k];
+  return `<div class="card ${c.rarity} ${cls}" data-k="${k}" ${attrs}>
+    <div class="cost"><b>${c.cost}</b></div>
+    <div class="art"><div class="face"></div><span class="ico">${c.icon}</span>
+      ${tag ? `<span class="tag">${tag}</span>` : ''}
+      ${lock ? `<div class="lock">🔒<small>${ARENAS[c.arena].name}</small></div>` : ''}</div>
+    <div class="nm">${c.short}</div></div>`;
+}
+
+// =================== HOME / DECK UI ===================
+let swapKey = null;
+function renderHome() {
+  const ai = arenaIdx(), ar = ARENAS[ai], next = ARENAS[ai + 1];
+  $('hTrophies').textContent = save.trophies;
+  $('hLvl').textContent = `Arena ${ai + 1} · ${ar.name}`;
+  $('arenaLbl').textContent = `Arena ${ai + 1}`;
+  $('arenaName').textContent = ar.name;
+  $('deco1').textContent = ar.deco[0]; $('deco2').textContent = ar.deco[1];
+  const card = $('arenaCard');
+  card.style.setProperty('--a1', ar.ui[0]); card.style.setProperty('--a2', ar.ui[1]); card.style.setProperty('--a3', ar.ui[2]);
+  if (next) {
+    $('arenaProg').style.width = ((save.trophies - ar.min) / (next.min - ar.min) * 100) + '%';
+    $('arenaProgLbl').textContent = `🏆 ${save.trophies} / ${next.min} to unlock ${next.name}`;
+  } else { $('arenaProg').style.width = '100%'; $('arenaProgLbl').textContent = `🏆 ${save.trophies} · Top arena reached`; }
+  $('deckPeek').innerHTML = save.deck.map(k => cardHTML(k)).join('');
+  $('avgCost1').textContent = $('avgCost2').textContent = `Avg ✨ ${avgCost(save.deck)}`;
+  $('sWins').textContent = save.wins; $('sLoss').textContent = save.losses; $('sBest').textContent = save.best;
+  $('deckPanel').classList.toggle('wiggle', !!swapKey);
+  $('swapbar').classList.toggle('hide', !swapKey);
+  if (swapKey) $('swapTxt').textContent = `Tap a deck card to swap in ${CARDS[swapKey].short}`;
+  $('deckGrid').innerHTML = save.deck.map(k => cardHTML(k, { attrs: 'data-deck="1"' })).join('');
+  const coll = ALL.filter(k => !save.deck.includes(k));
+  $('collGrid').innerHTML = coll.map(k => cardHTML(k, { lock: !unlocked(k), cls: swapKey === k ? 'sel' : '' })).join('');
+  $('collCount').textContent = `${ALL.filter(unlocked).length}/${ALL.length} unlocked`;
+}
+
+function showSheet(k, inDeck) {
+  const c = CARDS[k], s = c.s, locked = !unlocked(k);
+  const stats = c.spell
+    ? [['Cost', `✨ ${c.cost}`], ['Radius', c.radius], c.dmg ? ['Damage', c.dmg] : ['Effect', c.spell === 'hype' ? '+40%' : '-'],
+       c.dur ? ['Duration', c.dur + 's'] : ['Tower dmg', c.towerDmg || '-'], ['Type', 'Spell'], ['Hits', 'Air & ground']]
+    : [['Cost', `✨ ${c.cost}`], ['Hitpoints', s.hp + (s.shield ? ` +${s.shield}🛡️` : '')], ['Damage', s.dmg || '-'],
+       ['Range', s.building && !s.dmg ? '-' : s.range > 40 ? s.range : 'Melee'], ['Count', c.count > 1 ? '×' + c.count : s.building ? s.life + 's' : '×1'],
+       ['Targets', s.buildingsOnly ? 'Buildings' : s.hitsAir ? 'Air & ground' : s.dmg ? 'Ground' : '-']];
+  $('sheetCard').innerHTML = `
+    <div class="sheet-top ${c.rarity}">${cardHTML(k, { lock: locked })}
+      <div><div class="rar">${c.rarity}${s && s.air ? ' · Flying' : ''}${c.kind === 'building' ? ' · Building' : ''}</div><h3>${c.name}</h3><p>${c.desc}</p></div></div>
+    <div class="stat-grid">${stats.map(([l, v]) => `<div class="stat"><small>${l}</small><b>${v}</b></div>`).join('')}</div>
+    <div class="sheet-btns">
+      <button class="btn ghost" id="sheetClose">Close</button>
+      ${locked ? `<button class="btn blue" disabled style="opacity:.6">🔒 ${ARENAS[c.arena].min} 🏆</button>`
+        : inDeck ? '' : `<button class="btn yellow" id="sheetUse">Use</button>`}
+    </div>`;
+  $('sheet').classList.remove('hide');
+  $('sheetClose').onclick = () => $('sheet').classList.add('hide');
+  if ($('sheetUse')) $('sheetUse').onclick = () => { swapKey = k; $('sheet').classList.add('hide'); renderHome(); $('deckPanel').scrollIntoView({ behavior: 'smooth' }); };
+}
+$('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') $('sheet').classList.add('hide'); });
+
+document.querySelector('.nav').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('.nav button').forEach(x => x.classList.toggle('on', x === b));
+  $('tabBattle').classList.toggle('hide', b.dataset.tab !== 'battle');
+  $('tabDeck').classList.toggle('hide', b.dataset.tab !== 'deck');
+});
+$('deckGrid').addEventListener('click', e => {
+  const el = e.target.closest('.card'); if (!el) return;
+  if (swapKey) {
+    save.deck[save.deck.indexOf(el.dataset.k)] = swapKey; swapKey = null; persist(); renderHome();
+  } else showSheet(el.dataset.k, true);
+});
+$('collGrid').addEventListener('click', e => { const el = e.target.closest('.card'); if (el) showSheet(el.dataset.k, false); });
+$('deckPeek').addEventListener('click', e => { const el = e.target.closest('.card'); if (el) showSheet(el.dataset.k, true); });
+$('swapCancel').onclick = () => { swapKey = null; renderHome(); };
+
+// =================== CARTER SPRITES ===================
+const img = new Image();
+img.src = 'carter.jpg';
+const faces = {};
+function buildFaces() {
+  for (const team of ['p', 'e', 'g']) {
+    const c = document.createElement('canvas'); c.width = c.height = 160;
+    const g = c.getContext('2d');
+    g.save(); g.beginPath(); g.arc(80, 80, 80, 0, Math.PI * 2); g.clip();
+    if (img.naturalWidth) {
+      const s = Math.min(img.naturalWidth, img.naturalHeight) * 0.78;
+      g.drawImage(img, (img.naturalWidth - s) / 2, img.naturalHeight * 0.51 - s / 2, s, s, 0, 0, 160, 160);
+    } else { g.fillStyle = '#b98b66'; g.fillRect(0, 0, 160, 160); }
+    g.globalCompositeOperation = 'source-atop';
+    if (team === 'e') { g.fillStyle = 'rgba(255,70,60,.24)'; g.fillRect(0, 0, 160, 160); }
+    if (team === 'g') { g.fillStyle = 'rgba(255,196,40,.42)'; g.fillRect(0, 0, 160, 160); }
+    g.restore();
+    faces[team] = c;
+  }
+}
+buildFaces();
+img.onload = buildFaces;
+
+// =================== CANVAS ===================
+const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
+function fit() {
+  const sw = stage.clientWidth, sh = stage.clientHeight;
+  if (!sw || !sh) return;
+  const scale = Math.min(sw / W, sh / H), dpr = window.devicePixelRatio || 1;
+  cv.style.width = W * scale + 'px'; cv.style.height = H * scale + 'px';
+  cv.width = Math.round(W * scale * dpr); cv.height = Math.round(H * scale * dpr);
+  ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+}
+new ResizeObserver(fit).observe(stage);
+
+// =================== BATTLE STATE ===================
+let units = [], towers = [], projectiles = [], fx = [], texts = [], emotes = [];
+let energy, aiEnergy, hand, queue, aiHand, aiQueue, selected = null, time, phase, crowns = { p: 0, e: 0 },
+    running = false, aiTimer, ghost = null, clock = performance.now(), fastAnnounced, arena = ARENAS[0], ai = AI_LEVEL[0], battleArena = 0;
+
+function makeTower(team, x, y, king) {
+  const hp = king ? 2400 : 1400;
+  return { isTower: true, team, x, y, king, hp, max: hp, r: king ? 22 : 18, range: 125, dmg: king ? 60 : 50, hitsAir: true,
+           rate: king ? 1.0 : 0.8, cd: 0, active: !king, dead: false, flash: 0, stun: 0, shield: 0 };
+}
+
+function startBattle() {
+  battleArena = arenaIdx(); arena = ARENAS[battleArena]; ai = AI_LEVEL[battleArena];
+  units = []; projectiles = []; fx = []; texts = []; emotes = [];
+  towers = [
+    makeTower('p', 80, 494, false), makeTower('p', 280, 494, false), makeTower('p', 180, 554, true),
+    makeTower('e', 80, 112, false), makeTower('e', 280, 112, false), makeTower('e', 180, 52, true),
+  ];
+  energy = 5; aiEnergy = 5;
+  const d = shuffle(save.deck.slice()); hand = d.slice(0, 4); queue = d.slice(4);
+  const pool = shuffle(ALL.filter(k => CARDS[k].arena <= battleArena)).slice(0, 8);
+  const a = shuffle(pool); aiHand = a.slice(0, 4); aiQueue = a.slice(4);
+  selected = null; time = 180; phase = 'normal'; crowns = { p: 0, e: 0 }; aiTimer = 2.5; ghost = null; fastAnnounced = false;
+  $('home').classList.add('hide'); $('end').classList.add('hide'); $('battle').classList.remove('hide');
+  fit(); renderHand();
+  running = true; clock = performance.now();
+  banner('Battle!');
+}
+
+// =================== SPAWNING ===================
+function makeUnit(s, icon, team, x, y, key) {
+  return { ...s, key, icon, team, x, y, max: s.hp, shield: s.shield || 0, shieldMax: s.shield || 0, cd: 0, deploy: s.building ? 0.6 : 0.9, stun: 0, hype: 0,
+           target: null, retarget: 0, flash: 0, lunge: 0, dead: false, phase: Math.random() * 6, spawnCd: 1.2, healCd: 1 };
+}
+
+function spawn(key, team, x, y) {
+  const c = CARDS[key];
+  if (c.spell) return castSpell(c, team, x, y);
+  for (let i = 0; i < c.count; i++) {
+    const ang = (i / c.count) * Math.PI * 2 + 0.4, off = c.count > 1 ? (c.count > 5 ? 18 : 13) * (c.count > 5 && i % 2 ? 0.55 : 1) : 0;
+    units.push(makeUnit(c.s, c.icon, team, x + Math.cos(ang) * off, y + Math.sin(ang) * off, key));
+  }
+  fx.push({ kind: 'ring', x, y, t: 0, dur: 0.4, r: 22, color: COLORS[team] });
+}
+
+function spawnMinis(team, x, y, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const u = makeUnit(MINI, '👥', team, x + Math.cos(a) * 12, y + Math.sin(a) * 12, 'mini'); u.deploy = 0.3; units.push(u);
+  }
+}
+
+function area(team, x, y, r, fn) {
+  const foe = team === 'p' ? 'e' : 'p';
+  for (const e of [...units, ...towers]) if (e.team === foe && !e.dead && dist(e, { x, y }) < r + e.r) fn(e);
+}
+
+function castSpell(c, team, x, y) {
+  if (c.spell === 'bomb') {
+    fx.push({ kind: 'drop', x, y, t: 0, dur: 0.45, team, r: c.radius, done() {
+      fx.push({ kind: 'ring', x, y, t: 0, dur: 0.5, r: c.radius, color: '#ffae3a', fill: true });
+      burst(x, y, '#ffae3a', 18); shake(5);
+      area(team, x, y, c.radius, e => hit(e, e.isTower ? c.towerDmg : c.dmg));
+    } });
+  } else if (c.spell === 'nap') {
+    fx.push({ kind: 'ring', x, y, t: 0, dur: 0.8, r: c.radius, color: '#8f7cf2', fill: true });
+    area(team, x, y, c.radius, e => { e.stun = c.dur; hit(e, c.dmg); });
+  } else if (c.spell === 'hype') {
+    fx.push({ kind: 'ring', x, y, t: 0, dur: 0.8, r: c.radius, color: '#ff6a3d', fill: true });
+    for (const u of units) if (u.team === team && !u.building && dist(u, { x, y }) < c.radius + u.r) u.hype = c.dur;
+  }
+}
+
+// =================== COMBAT ===================
+let shakeAmt = 0;
+const shake = n => shakeAmt = Math.max(shakeAmt, n);
+
+function hit(t, dmg) {
+  if (t.dead || dmg <= 0) return;
+  if (t.shield > 0) {
+    const a = Math.min(t.shield, dmg); t.shield -= a; dmg -= a;
+    if (t.shield <= 0) burst(t.x, t.y, '#9fc1ff', 8);
+  }
+  t.hp -= dmg; t.flash = 0.12;
+  if (t.isTower && t.king && !t.active) { t.active = true; }
+  texts.push({ x: t.x + (Math.random() * 10 - 5), y: t.y - t.r - 4, text: '-' + Math.round(dmg), t: 0, color: t.team === 'p' ? COLORS.e : COLORS.p });
+  if (t.hp <= 0) kill(t);
+}
+
+function kill(t) {
+  if (t.dead) return;
+  t.dead = true; t.hp = 0;
+  burst(t.x, t.y, COLORS[t.team], t.isTower ? 30 : 10);
+  if (!t.isTower) {
+    if (t.deathSpawn) spawnMinis(t.team, t.x, t.y, t.deathSpawn);
+    if (t.deathDmg) { fx.push({ kind: 'ring', x: t.x, y: t.y, t: 0, dur: 0.4, r: 40, color: '#ffae3a', fill: true }); area(t.team, t.x, t.y, 40, e => hit(e, t.deathDmg)); }
+    return;
+  }
+  shake(8);
+  const foe = t.team === 'p' ? 'e' : 'p';
+  if (t.king) { crowns[foe] = 3; endGame(); return; }
+  crowns[foe]++;
+  towers.find(k => k.king && k.team === t.team).active = true;
+  texts.push({ x: t.x, y: t.y, text: '👑', t: 0, big: true });
+  if (foe === 'e' && Math.random() < 0.7) emote('e', ['😂', '😎', 'GG'][Math.random() * 3 | 0]);
+  if (foe === 'p' && Math.random() < 0.5) emote('e', ['😤', '🥲', '🤯'][Math.random() * 3 | 0]);
+  if (phase === 'overtime') endGame();
+}
+
+function burst(x, y, color, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = 40 + Math.random() * 100;
+    fx.push({ kind: 'p', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, dur: 0.5 + Math.random() * 0.35, color });
+  }
+}
+
+function canTarget(u, e) {
+  if (e.dead) return false;
+  if (e.air && !u.hitsAir) return false;
+  if (u.buildingsOnly && !(e.isTower || e.building)) return false;
+  return true;
+}
+
+function findTarget(u) {
+  let best = null, bd = 1e9;
+  for (const e of units) {
+    if (e.team === u.team || !canTarget(u, e)) continue;
+    const d = dist(u, e);
+    if ((u.buildingsOnly || d < u.sight) && d < bd) { bd = d; best = e; }
+  }
+  if (best && !u.buildingsOnly) return best;
+  for (const t of towers) {
+    if (t.team === u.team || t.dead) continue;
+    const d = dist(u, t); if (d < bd) { bd = d; best = t; }
+  }
+  return best;
+}
+
+// ground troops route through the nearest bridge when the target is across the river
+function waypoint(u, tx, ty) {
+  if (u.air) return { x: tx, y: ty };
+  const bx = nearestBridge(u.x);
+  if (Math.abs(u.y - RIVER) < BAND + 2) return { x: bx, y: ty < RIVER ? RIVER - 22 : RIVER + 22 };
+  const us = u.y < RIVER ? -1 : 1, ts = ty < RIVER ? -1 : 1;
+  if (us !== ts) return Math.abs(u.x - bx) > 4 ? { x: bx, y: RIVER + us * 20 } : { x: bx, y: RIVER - us * 24 };
+  return { x: tx, y: ty };
+}
+
+function updateUnit(u, dt) {
+  u.flash = Math.max(0, u.flash - dt); u.lunge = Math.max(0, u.lunge - dt); u.hype = Math.max(0, u.hype - dt);
+  if (u.deploy > 0) { u.deploy -= dt; return; }
+  if (u.building) {
+    hit0(u, u.max / u.life * dt);
+    if (u.spawnEvery && (u.spawnCd -= dt) <= 0) { u.spawnCd = u.spawnEvery; spawnMinis(u.team, u.x, u.y + (u.team === 'p' ? -18 : 18), 1); }
+  }
+  if (u.dead) return;
+  if (u.stun > 0) { u.stun -= dt; return; }
+  const mult = u.hype > 0 ? 1.4 : 1;
+  if (u.heal && (u.healCd -= dt) <= 0) {
+    u.healCd = 1;
+    for (const a of units) if (a.team === u.team && !a.dead && !a.building && a.hp < a.max && dist(a, u) < 65) {
+      a.hp = Math.min(a.max, a.hp + u.heal);
+      texts.push({ x: a.x, y: a.y - a.r - 4, text: '+' + u.heal, t: 0, color: '#2fb36a' });
+    }
+    fx.push({ kind: 'ring', x: u.x, y: u.y, t: 0, dur: 0.5, r: 65, color: '#2fb36a' });
+  }
+  if (!u.dmg) return;
+  if (u.building) {
+    let best = null, bd = u.range;
+    for (const e of units) if (e.team !== u.team && canTarget(u, e) && !e.building) { const d = dist(u, e) - e.r; if (d < bd) { bd = d; best = e; } }
+    u.cd -= dt;
+    if (best) u.aim = Math.atan2(best.y - u.y, best.x - u.x);
+    if (best && u.cd <= 0) { u.cd = u.rate; attack(u, best); }
+    return;
+  }
+  u.retarget -= dt;
+  if (!u.target || u.target.dead || (!u.attacking && u.retarget <= 0)) { u.target = findTarget(u); u.retarget = 0.35; }
+  const t = u.target; if (!t) return;
+  const d = dist(u, t) - t.r - u.r * 0.3;
+  if (d <= u.range) {
+    if (u.kamikaze) {
+      fx.push({ kind: 'ring', x: u.x, y: u.y, t: 0, dur: 0.4, r: u.kamikaze, color: '#ffae3a', fill: true });
+      burst(u.x, u.y, '#ffae3a', 12);
+      area(u.team, u.x, u.y, u.kamikaze, e => hit(e, e.isTower ? u.dmg * 0.6 : u.dmg));
+      u.dead = true; return;
+    }
+    u.attacking = true; u.cd -= dt * mult;
+    if (u.cd <= 0) { u.cd = u.rate; attack(u, t); }
+  } else {
+    u.attacking = false; u.cd = Math.min(u.cd, u.rate * 0.3);
+    const wp = waypoint(u, t.x, t.y);
+    const dx = wp.x - u.x, dy = wp.y - u.y, l = Math.hypot(dx, dy);
+    if (l > 0.5) { const s = Math.min(l, u.speed * mult * dt); u.x += dx / l * s; u.y += dy / l * s; }
+  }
+}
+// silent damage (building decay) without floating numbers
+function hit0(u, dmg) { u.hp -= dmg; if (u.hp <= 0) kill(u); }
+
+function attack(a, t) {
+  if (a.ranged || a.isTower) {
+    projectiles.push({ x: a.x, y: a.y - (a.isTower ? 14 : 0), t, tx: t.x, ty: t.y, dmg: a.dmg, team: a.team, splash: a.splash || 0,
+      speed: a.range > 150 ? 520 : 320, kind: a.splash ? 'magic' : a.heal ? 'snack' : a.range > 150 ? 'snipe' : a.isTower || a.building ? 'ball' : 'arrow' });
+  } else {
+    a.lunge = 0.15; a.lungeDir = Math.atan2(t.y - a.y, t.x - a.x);
+    if (a.splash) area(a.team, t.x, t.y, a.splash, e => { if (canTarget(a, e)) hit(e, a.dmg); });
+    else hit(t, a.dmg);
+    if (a.dmg >= 300) shake(3);
+  }
+}
+
+function updateTower(t, dt) {
+  t.flash = Math.max(0, t.flash - dt);
+  if (t.dead || !t.active) return;
+  if (t.stun > 0) { t.stun -= dt; return; }
+  let best = null, bd = t.range;
+  for (const u of units) if (u.team !== t.team && !u.dead && u.deploy <= 0) { const d = dist(t, u); if (d < bd) { bd = d; best = u; } }
+  t.cd -= dt;
+  if (best && t.cd <= 0) { t.cd = t.rate; attack(t, best); }
+}
+
+function updateProjectiles(dt) {
+  for (const p of projectiles) {
+    if (!p.t.dead) { p.tx = p.t.x; p.ty = p.t.y; }
+    const dx = p.tx - p.x, dy = p.ty - p.y, l = Math.hypot(dx, dy), s = p.speed * dt;
+    if (l <= s + 2) {
+      p.done = true;
+      if (p.splash) {
+        fx.push({ kind: 'ring', x: p.tx, y: p.ty, t: 0, dur: 0.3, r: p.splash, color: '#ad62f2', fill: true });
+        area(p.team, p.tx, p.ty, p.splash, e => hit(e, p.dmg));
+      } else if (!p.t.dead) hit(p.t, p.dmg);
+    } else { p.x += dx / l * s; p.y += dy / l * s; }
+  }
+  projectiles = projectiles.filter(p => !p.done);
+}
+
+function separate() {
+  for (let i = 0; i < units.length; i++) {
+    const a = units[i];
+    for (let j = i + 1; j < units.length; j++) {
+      const b = units[j];
+      if (!!a.air !== !!b.air) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01, m = a.r + b.r - 2;
+      if (d < m) {
+        const push = (m - d) / 2;
+        const wa = a.building ? 0 : b.building ? 2 : b.r / (a.r + b.r) * 2, wb = b.building ? 0 : a.building ? 2 : a.r / (a.r + b.r) * 2;
+        a.x -= dx / d * push * wa; a.y -= dy / d * push * wa;
+        b.x += dx / d * push * wb; b.y += dy / d * push * wb;
+      }
+    }
+    if (a.air || a.building) continue;
+    for (const t of towers) {
+      if (t.dead) continue;
+      const dx = a.x - t.x, dy = a.y - t.y, d = Math.hypot(dx, dy) || 0.01, m = a.r + t.r;
+      if (d < m) { a.x = t.x + dx / d * m; a.y = t.y + dy / d * m; }
+    }
+  }
+  for (const u of units) {
+    u.x = Math.max(u.r, Math.min(W - u.r, u.x)); u.y = Math.max(u.r, Math.min(H - u.r, u.y));
+    if (!u.air && Math.abs(u.y - RIVER) < BAND) {
+      const bx = nearestBridge(u.x);
+      u.x = Math.max(bx - BRIDGE_HALF + u.r * 0.5, Math.min(bx + BRIDGE_HALF - u.r * 0.5, u.x));
+    }
+  }
+}
+
+// deploy zone: own half, plus the enemy lane once its guard tower falls
+function minDeployY(team, x) {
+  const foe = team === 'p' ? 'e' : 'p';
+  const side = towers.find(t => t.team === foe && !t.king && (x < W / 2 ? t.x < W / 2 : t.x > W / 2));
+  if (team === 'p') return side && side.dead ? 175 : RIVER + BAND + 8;
+  return side && side.dead ? 425 : RIVER - BAND - 8;
+}
+function clampPlace(c, x, y, team = 'p') {
+  if (c.spell) return { x: Math.max(0, Math.min(W, x)), y: Math.max(0, Math.min(H, y)) };
+  x = Math.max(14, Math.min(W - 14, x));
+  if (team === 'p') return { x, y: Math.max(minDeployY('p', x), Math.min(H - 14, y)) };
+  return { x, y: Math.min(minDeployY('e', x), Math.max(14, y)) };
+}
+
+// =================== AI ===================
+function aiPlay(dt) {
+  aiTimer -= dt; if (aiTimer > 0) return;
+  aiTimer = ai.think * (0.7 + Math.random() * 0.6);
+  const opts = aiHand.map((k, i) => ({ k, i, c: CARDS[k] })).filter(o => o.c.cost <= aiEnergy);
+  if (!opts.length) return;
+  const pick = f => { const o = opts.filter(f); return o.length ? o[Math.random() * o.length | 0] : null; };
+  const isTroop = o => !o.c.spell && o.c.kind !== 'building';
+  const threats = units.filter(u => u.team === 'p' && !u.building && u.y < RIVER + 70);
+  let o = null, x, y;
+  if (threats.length) {
+    const lead = threats.reduce((a, b) => a.y < b.y ? a : b);
+    const cluster = threats.filter(u => dist(u, lead) < 55);
+    if (cluster.length >= 3 || (cluster.length >= 2 && Math.random() < 0.4)) o = pick(o => o.c.spell === 'bomb' || o.c.spell === 'nap');
+    if (o) { x = lead.x; y = lead.y + 6; }
+    else {
+      if (lead.air) o = pick(o => isTroop(o) && o.c.s.hitsAir && !o.c.s.buildingsOnly);
+      if (!o && !lead.air && Math.random() < 0.4) o = pick(o => o.c.kind === 'building');
+      if (!o) o = pick(o => isTroop(o) && !o.c.s.buildingsOnly);
+      if (!o) return;
+      if (o.c.kind === 'building') { x = lead.x < W / 2 ? 120 : 240; y = 190; }
+      else { x = lead.x + (Math.random() * 30 - 15); y = lead.y - 50; }
+    }
+  } else {
+    const mine = units.filter(u => u.team === 'e' && !u.building && u.y > RIVER - 80);
+    if (mine.length >= 2) o = pick(o => o.c.spell === 'hype');
+    if (o) { x = mine[0].x; y = mine[0].y + 20; }
+    else {
+      if (aiEnergy < ai.save && Math.random() < 0.75) return;
+      if (aiEnergy >= 9.5 && Math.random() < 0.3) {
+        o = pick(o => o.c.spell === 'bomb');
+        const tgt = towers.filter(t => t.team === 'p' && !t.dead && !t.king);
+        if (o && tgt.length) { const t = tgt[Math.random() * tgt.length | 0]; x = t.x; y = t.y; }
+        else o = null;
+      }
+      if (!o) {
+        o = pick(o => isTroop(o) || o.c.kind === 'building'); if (!o) return;
+        const weak = towers.filter(t => t.team === 'p' && !t.king && !t.dead).sort((a, b) => a.hp - b.hp)[0];
+        const lane = weak && Math.random() < 0.6 ? weak.x : BRIDGES[Math.random() * 2 | 0];
+        x = lane + (Math.random() * 20 - 10);
+        y = o.c.kind === 'building' ? 200 : o.c.s.buildingsOnly ? 140 + Math.random() * 40 : 170 + Math.random() * 90;
+      }
+    }
+  }
+  const g = clampPlace(o.c, x, y, 'e');
+  aiEnergy -= o.c.cost;
+  spawn(o.k, 'e', g.x, g.y);
+  aiHand[o.i] = aiQueue.shift(); aiQueue.push(o.k);
+  if (Math.random() < 0.04) emote('e', ['😎', '🙏', 'CARTER!'][Math.random() * 3 | 0]);
+}
+
+// =================== LOOP ===================
+function step(dt) {
+  time -= dt;
+  const fast = phase === 'overtime' || time < 60;
+  if (fast && !fastAnnounced) { fastAnnounced = true; if (phase === 'normal') banner('2× Vibes!'); }
+  const regen = (fast ? 2 : 1) / 2.8;
+  energy = Math.min(10, energy + regen * dt);
+  aiEnergy = Math.min(10, aiEnergy + regen * ai.regen * dt);
+  aiPlay(dt);
+  for (const u of units) updateUnit(u, dt);
+  for (const t of towers) updateTower(t, dt);
+  updateProjectiles(dt);
+  separate();
+  units = units.filter(u => !u.dead);
+  for (const f of fx) {
+    f.t += dt;
+    if (f.kind === 'p') { f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= 0.9; f.vy *= 0.9; }
+    if (f.t >= f.dur && f.done) { const d = f.done; f.done = null; d(); }
+  }
+  fx = fx.filter(f => f.t < f.dur);
+  for (const t of texts) t.t += dt;
+  texts = texts.filter(t => t.t < (t.big ? 1.4 : 0.8));
+  for (const e of emotes) e.t += dt;
+  emotes = emotes.filter(e => e.t < 2.2);
+  shakeAmt = Math.max(0, shakeAmt - dt * 30);
+  if (time <= 0 && running) {
+    if (phase === 'normal' && crowns.p === crowns.e) { phase = 'overtime'; time = 60; banner('Overtime!<br><small style="font-size:16px">Next crown wins</small>'); }
+    else { time = 0; endGame(); }
+  }
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - clock) / 1000); clock = now;
+  if (!$('battle').classList.contains('hide')) {
+    if (running) step(dt);
+    draw(now / 1000);
+    updateHud();
+  }
+  requestAnimationFrame(frame);
+}
+
+// =================== DRAWING ===================
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+function drawArena(now) {
+  // grass checker
+  ctx.fillStyle = arena.grass[0]; ctx.fillRect(-10, -10, W + 20, H + 20);
+  ctx.fillStyle = arena.grass[1];
+  for (let y = 0; y < H; y += 30) for (let x = (y / 30) % 2 ? 30 : 0; x < W; x += 60) ctx.fillRect(x, y, 30, 30);
+  // soft light from the top
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, 'rgba(255,255,255,.18)'); sky.addColorStop(0.5, 'rgba(255,255,255,0)'); sky.addColorStop(1, 'rgba(255,255,255,.12)');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // grass tufts
+  ctx.strokeStyle = arena.tuft; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (const [x, y] of TUFTS) { ctx.moveTo(x - 3, y); ctx.lineTo(x - 4, y - 4); ctx.moveTo(x, y); ctx.lineTo(x, y - 6); ctx.moveTo(x + 3, y); ctx.lineTo(x + 4, y - 4); }
+  ctx.stroke();
+  // sandy lanes with a darker rim
+  for (const o of [3, 0]) {
+    ctx.fillStyle = o ? arena.pathEdge : arena.path;
+    for (const bx of BRIDGES) { rrect(bx - 14 - o, 108 - o, 28 + o * 2, 390 + o * 2, 14); ctx.fill(); }
+    rrect(66 - o, 98 - o, 228 + o * 2, 28 + o * 2, 14); ctx.fill();
+    rrect(66 - o, 480 - o, 228 + o * 2, 28 + o * 2, 14); ctx.fill();
+  }
+  ctx.fillStyle = arena.pathEdge;
+  for (const bx of BRIDGES) for (let y = 140; y < 470; y += 37) if (Math.abs(y - RIVER) > 30) { ctx.beginPath(); ctx.arc(bx + ((y * 7) % 13) - 6, y, 1.8, 0, Math.PI * 2); ctx.fill(); }
+  // decorations
+  ctx.font = '17px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  [[16, 34, 0], [344, 40, 1], [18, 200, 1], [342, 230, 0], [16, 380, 0], [344, 400, 1], [20, 572, 1], [340, 576, 0], [180, 200, 0], [180, 404, 1]]
+    .forEach(([x, y, k]) => ctx.fillText(arena.deco[k], x, y));
+  // river: bank, water gradient, foam and sparkles
+  ctx.fillStyle = arena.bank; ctx.fillRect(0, RIVER - BAND - 4, W, BAND * 2 + 8);
+  const water = ctx.createLinearGradient(0, RIVER - BAND, 0, RIVER + BAND);
+  water.addColorStop(0, arena.river[0]); water.addColorStop(1, arena.river[1]);
+  ctx.fillStyle = water; ctx.fillRect(0, RIVER - BAND, W, BAND * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+  for (const row of [-1, 1]) {
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 5) ctx.lineTo(x, RIVER + row * (BAND - 2) + Math.sin(x / 14 + now * 2 + row) * 1.4);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  for (let i = 0; i < 9; i++) {
+    const x = (i * 43 + now * 22) % (W + 20) - 10, y = RIVER + Math.sin(i * 2.1) * 6, a = (Math.sin(now * 3 + i) + 1) / 2;
+    ctx.globalAlpha = a; ctx.fillRect(x - 3, y - 0.8, 6, 1.6); ctx.fillRect(x - 0.8, y - 3, 1.6, 6);
+  }
+  ctx.globalAlpha = 1;
+  // wooden bridges
+  for (const bx of BRIDGES) {
+    const top = RIVER - BAND - 7, h = BAND * 2 + 14, w = BRIDGE_HALF * 2;
+    ctx.fillStyle = 'rgba(0,0,0,.15)'; rrect(bx - w / 2 + 2, top + 3, w, h, 5); ctx.fill();
+    ctx.fillStyle = '#e3a764'; rrect(bx - w / 2, top, w, h, 5); ctx.fill();
+    ctx.strokeStyle = '#a8692f'; ctx.lineWidth = 1.2;
+    for (let y = top + 5; y < top + h - 2; y += 5) { ctx.beginPath(); ctx.moveTo(bx - w / 2 + 3, y); ctx.lineTo(bx + w / 2 - 3, y); ctx.stroke(); }
+    ctx.fillStyle = '#8f5422';
+    for (const s of [-1, 1]) { rrect(bx + s * (w / 2) - 2.5, top - 2, 5, h + 4, 2.5); ctx.fill(); }
+  }
+  // inner rim
+  ctx.strokeStyle = 'rgba(0,0,0,.07)'; ctx.lineWidth = 8; ctx.strokeRect(0, 0, W, H);
+  // deploy zone
+  if (selected !== null && !CARDS[hand[selected]].spell) {
+    ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]);
+    for (const half of [[0, W / 2], [W / 2, W]]) {
+      const top = minDeployY('p', half[0] + 1);
+      ctx.fillRect(half[0], top, half[1] - half[0], H - top);
+      ctx.beginPath(); ctx.moveTo(half[0], top); ctx.lineTo(half[1], top); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,60,60,.1)';
+    for (const half of [[0, W / 2], [W / 2, W]]) ctx.fillRect(half[0], 0, half[1] - half[0], minDeployY('p', half[0] + 1));
+  }
+}
+
+function hpBar(x, y, w, ratio, team, h = 5) {
+  ctx.fillStyle = 'rgba(20,30,50,.55)'; rrect(x - w / 2 - 1, y - 1, w + 2, h + 2, (h + 2) / 2); ctx.fill();
+  ctx.fillStyle = COLORS[team]; rrect(x - w / 2, y, Math.max(0, w * ratio), h, h / 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; rrect(x - w / 2, y, Math.max(0, w * ratio), h / 2, h / 4); ctx.fill();
+}
+
+function face(key, team, x, y, r, ring = 2.5, color = COLORS[team]) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r + ring * 1.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r + ring * 0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.drawImage(faces[key], x - r, y - r, r * 2, r * 2);
+}
+
+function drawTower(t, now) {
+  const big = t.king, w = big ? 54 : 44, h = big ? 36 : 30, top = t.y - h / 2 + 4;
+  if (t.dead) {
+    ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(t.x, t.y + 8, w / 2, 9, 0, 0, Math.PI * 2); ctx.fill();
+    for (const [ox, oy, r] of [[-10, 4, 7], [8, 2, 6], [0, 10, 6], [-3, -2, 5], [12, 10, 4]]) {
+      ctx.fillStyle = '#9aa7b8'; ctx.beginPath(); ctx.arc(t.x + ox, t.y + oy + 1.5, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#cfd8e3'; ctx.beginPath(); ctx.arc(t.x + ox, t.y + oy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.font = '12px serif'; ctx.textAlign = 'center'; ctx.fillText('💨', t.x + 14, t.y - 8 + Math.sin(now * 2) * 2);
+    return;
+  }
+  ctx.fillStyle = 'rgba(20,40,10,.22)'; ctx.beginPath(); ctx.ellipse(t.x, top + h + 3, w / 2 + 6, 8, 0, 0, Math.PI * 2); ctx.fill();
+  // stone body
+  ctx.fillStyle = '#9fb0c4'; rrect(t.x - w / 2, top + 5, w, h, 10); ctx.fill();
+  ctx.fillStyle = t.flash > 0 ? '#ffffff' : '#eef3f8'; rrect(t.x - w / 2, top, w, h, 10); ctx.fill();
+  ctx.strokeStyle = '#7d8fa6'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(125,143,166,.35)'; ctx.lineWidth = 1;
+  for (let i = 1; i < 3; i++) { const y = top + h * i / 3 + 2; ctx.beginPath(); ctx.moveTo(t.x - w / 2 + 4, y); ctx.lineTo(t.x + w / 2 - 4, y); ctx.stroke(); }
+  // team-coloured battlements
+  const n = big ? 5 : 4, bw = w / (n * 2 - 1);
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = DARK[t.team]; rrect(t.x - w / 2 + i * bw * 2, top - 5, bw, 10, 2.5); ctx.fill();
+    ctx.fillStyle = COLORS[t.team]; rrect(t.x - w / 2 + i * bw * 2, top - 7, bw, 9, 2.5); ctx.fill();
+  }
+  // flag
+  if (big) {
+    ctx.strokeStyle = '#6b5a45'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(t.x + w / 2 - 4, top); ctx.lineTo(t.x + w / 2 - 4, top - 26); ctx.stroke();
+    const wv = Math.sin(now * 5) * 2;
+    ctx.fillStyle = COLORS[t.team]; ctx.beginPath(); ctx.moveTo(t.x + w / 2 - 4, top - 26); ctx.quadraticCurveTo(t.x + w / 2 + 6, top - 24 + wv, t.x + w / 2 + 12, top - 21); ctx.lineTo(t.x + w / 2 - 4, top - 16); ctx.fill();
+  }
+  // carter on top
+  const bob = t.active && t.cd > t.rate - 0.12 ? -2.5 : 0;
+  face(t.team, t.team, t.x, top + 7 + bob, big ? 15 : 12, 2.2);
+  ctx.font = big ? '18px serif' : '11px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (big && t.active) ctx.fillText('👑', t.x, top - 13 + bob);
+  if (big && !t.active) { ctx.font = '700 11px Fredoka'; ctx.fillStyle = '#fff'; ctx.fillText('z', t.x + 19, top - 6 + Math.sin(now * 3) * 2); ctx.fillText('Z', t.x + 25, top - 14 + Math.sin(now * 3 + 1) * 2); }
+  if (t.stun > 0) { ctx.font = '14px serif'; ctx.fillText('💤', t.x - 18, top - 8); }
+  // hp pill
+  const py = top + h + 8, pw = big ? 56 : 48;
+  ctx.fillStyle = DARK[t.team]; rrect(t.x - pw / 2, py + 1.5, pw, 14, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.4)'; rrect(t.x - pw / 2, py, pw, 14, 7); ctx.fill();
+  ctx.fillStyle = COLORS[t.team]; rrect(t.x - pw / 2, py, pw * Math.max(0.12, t.hp / t.max), 14, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '700 9.5px Fredoka, sans-serif'; ctx.fillText(Math.ceil(t.hp), t.x, py + 7.5);
+}
+
+function drawBuilding(u, now) {
+  const r = u.r, sc = u.deploy > 0 ? 1 - Math.max(0, u.deploy) / 0.6 * 0.5 : 1;
+  ctx.save();
+  ctx.fillStyle = 'rgba(20,40,10,.22)'; ctx.beginPath(); ctx.ellipse(u.x, u.y + r * 0.9, r * 1.3, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.translate(u.x, u.y); ctx.scale(sc, sc);
+  // wooden platform
+  ctx.fillStyle = '#a8692f'; rrect(-r - 4, -r * 0.4 + 4, r * 2 + 8, r * 1.3, 6); ctx.fill();
+  ctx.fillStyle = '#e3a764'; rrect(-r - 4, -r * 0.4, r * 2 + 8, r * 1.3, 6); ctx.fill();
+  ctx.fillStyle = COLORS[u.team]; rrect(-r - 4, r * 0.55, r * 2 + 8, 4, 2); ctx.fill();
+  if (u.key === 'cannon') {
+    const a = u.aim ?? (u.team === 'p' ? -Math.PI / 2 : Math.PI / 2);
+    ctx.save(); ctx.rotate(a); ctx.fillStyle = '#3d4654'; rrect(0, -4.5, r * 1.5, 9, 4); ctx.fill(); ctx.fillStyle = '#5b6677'; rrect(r * 1.2, -5.5, 5, 11, 2); ctx.fill(); ctx.restore();
+  } else if (u.key === 'factory') {
+    ctx.fillStyle = '#7d8fa6'; rrect(r * 0.4, -r * 1.9, 7, r * 1.2, 2); ctx.fill();
+    for (let i = 0; i < 3; i++) { const k = (now * 0.8 + i / 3) % 1; ctx.globalAlpha = 1 - k; ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(r * 0.4 + 3.5 + k * 6, -r * 1.9 - k * 16, 3 + k * 4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+  face(u.team, u.team, 0, -r * 0.35, r * 0.72, 2);
+  ctx.font = `${r * 0.8}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(u.icon, r * 0.85, r * 0.2);
+  if (u.flash > 0) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(0, -r * 0.35, r * 0.75, 0, Math.PI * 2); ctx.fill(); }
+  if (u.stun > 0) ctx.fillText('💤', 0, -r * 1.4);
+  ctx.restore();
+  hpBar(u.x, u.y - r * 1.55, r * 2.2, u.hp / u.max, u.team, 4);
+}
+
+// a little Carter: feet, team-coloured body, gear in hand, big Carter head, optional hat
+function drawUnit(u, now) {
+  if (u.building) return drawBuilding(u, now);
+  const R = u.r * 1.18, lift = u.air ? 22 : 0, g = GEAR[u.key] || {};
+  const walking = !u.attacking && u.deploy <= 0 && u.stun <= 0;
+  const stride = walking ? Math.sin(now * 14 + u.phase) : 0;
+  let x = u.x, y = u.y - lift - Math.abs(stride) * R * 0.12;
+  if (u.air) y += Math.sin(now * 3 + u.phase) * 2;
+  if (u.lunge > 0) { const k = Math.sin(u.lunge / 0.15 * Math.PI) * R * 0.35; x += Math.cos(u.lungeDir) * k; y += Math.sin(u.lungeDir) * k; }
+  const sc = u.deploy > 0 ? 1 - Math.max(0, u.deploy) / 0.9 * 0.6 : 1;
+  const facing = u.target && Math.abs(u.target.x - u.x) > 2 ? Math.sign(u.target.x - u.x) : (u.team === 'p' ? 1 : -1);
+  const col = u.gold ? '#ffc21a' : COLORS[u.team], dk = u.gold ? '#d18f00' : DARK[u.team], headY = -R * 1.02, hr = R * 0.7;
+
+  ctx.save();
+  if (u.deploy > 0) ctx.globalAlpha = 0.45 + 0.55 * (1 - u.deploy / 0.9);
+  ctx.fillStyle = 'rgba(20,40,10,.25)';
+  ctx.beginPath(); ctx.ellipse(u.x, u.y + R * 0.62, R * (u.air ? 0.7 : 0.9), R * 0.28, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.translate(x, y); ctx.scale(sc, sc);
+
+  if (u.hype > 0) { ctx.fillStyle = 'rgba(255,120,40,.25)'; ctx.beginPath(); ctx.arc(0, -R * 0.2, R * 1.35 + Math.sin(now * 14) * 1.5, 0, Math.PI * 2); ctx.fill(); }
+  if (u.key === 'balloon') {
+    ctx.strokeStyle = 'rgba(60,40,20,.5)'; ctx.lineWidth = 1;
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * R * 0.4, -R * 0.1); ctx.lineTo(s * R * 0.6, -R * 1.9); ctx.stroke(); }
+    const bg = ctx.createRadialGradient(-R * 0.3, -R * 2.6, 2, 0, -R * 2.2, R * 1.2);
+    bg.addColorStop(0, '#fff'); bg.addColorStop(0.25, col); bg.addColorStop(1, dk);
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.ellipse(0, -R * 2.2, R * 1.05, R * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c47a3a'; rrect(-R * 0.75, -R * 0.25, R * 1.5, R * 0.75, 4); ctx.fill();
+    ctx.fillStyle = '#e3a764'; rrect(-R * 0.75, -R * 0.25, R * 1.5, R * 0.25, 3); ctx.fill();
+  }
+  if (u.air && u.key !== 'balloon') {
+    const f = Math.sin(now * 20 + u.phase) * 0.45;
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#b8d4ff'; ctx.lineWidth = 1.2;
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * R * 0.95, -R * 0.15, R * 0.75, R * 0.36, s * (0.5 + f), 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  }
+  if (u.key !== 'balloon') {
+    // feet
+    if (!u.air) {
+      ctx.fillStyle = '#3b3530';
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * R * 0.3, R * 0.5 - (s * stride > 0 ? R * 0.12 : 0), R * 0.24, R * 0.16, 0, 0, Math.PI * 2); ctx.fill(); }
+    }
+    // body
+    ctx.fillStyle = dk; rrect(-R * 0.6, -R * 0.2 + 1.5, R * 1.2, R * 0.78, R * 0.34); ctx.fill();
+    ctx.fillStyle = col; rrect(-R * 0.6, -R * 0.2, R * 1.2, R * 0.74, R * 0.34); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; rrect(-R * 0.45, -R * 0.12, R * 0.5, R * 0.18, R * 0.09); ctx.fill();
+    ctx.fillStyle = '#fff'; rrect(-R * 0.6, R * 0.22, R * 1.2, R * 0.1, 1); ctx.fill();
+  }
+  // gear in hand (swings on attack)
+  if (g.hand) {
+    ctx.save(); ctx.translate(facing * R * 0.72, R * 0.08);
+    const swing = u.lunge > 0 ? Math.sin(u.lunge / 0.15 * Math.PI) * 1.1 : Math.sin(now * 5 + u.phase) * 0.12;
+    ctx.rotate(facing * swing); if (facing < 0) ctx.scale(-1, 1);
+    ctx.font = `${R * 0.95}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.hand, 0, 0);
+    ctx.restore();
+  }
+  // head
+  face(u.gold ? 'g' : u.team, u.team, 0, headY, hr, Math.max(1.6, R * 0.13), col);
+  if (u.flash > 0) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(0, headY, hr, 0, Math.PI * 2); ctx.fill(); }
+  if (g.hat) { ctx.font = `${hr * 1.15}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.hat, 0, headY - hr * 0.95); }
+  if (u.gold) { ctx.fillStyle = '#fff'; for (let i = 0; i < 3; i++) { const a = now * 2 + i * 2.1; ctx.globalAlpha = (Math.sin(now * 5 + i) + 1) / 2;
+    ctx.beginPath(); ctx.arc(Math.cos(a) * R * 1.3, headY + Math.sin(a) * R * 1.1, 1.8, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1; }
+  if (u.shield > 0 && u.key === 'shield') { ctx.strokeStyle = '#8fb8ff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, -R * 0.2, R * 1.25, Math.PI * 0.75, Math.PI * 1.25); ctx.stroke(); }
+  if (u.stun > 0) { ctx.font = `${R * 0.8}px serif`; ctx.textAlign = 'center'; ctx.fillText('💤', R * 0.6, headY - hr - 4 + Math.sin(now * 3) * 2); }
+  ctx.restore();
+
+  const showHp = u.hp < u.max || u.shield < u.shieldMax;
+  if (showHp) {
+    const bw = Math.max(18, R * 2), top = u.key === 'balloon' ? y - R * 3.5 : y + headY * sc - hr - (g.hat ? hr * 1.3 : 6);
+    hpBar(u.x, top - 4, bw, u.hp / u.max, u.team, 4);
+    if (u.shield > 0) { ctx.fillStyle = '#9fc1ff'; rrect(u.x - bw / 2, top - 9, bw * u.shield / u.shieldMax, 3, 1.5); ctx.fill(); }
+  }
+}
+
+function draw(now) {
+  ctx.save();
+  if (shakeAmt > 0) ctx.translate((Math.random() - 0.5) * shakeAmt, (Math.random() - 0.5) * shakeAmt);
+  drawArena(now);
+  for (const f of fx) if (f.kind === 'drop') {
+    const k = f.t / f.dur;
+    ctx.fillStyle = 'rgba(255,174,58,.18)'; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * k, 0, Math.PI * 2); ctx.fill();
+    ctx.drawImage(faces[f.team], f.x - 13, f.y - 13 - (1 - k) * 180, 26, 26);
+  }
+  const ground = [...towers, ...units.filter(u => !u.air)].sort((a, b) => (b.dead ? 1 : 0) - (a.dead ? 1 : 0) || a.y - b.y);
+  for (const e of ground) e.isTower ? drawTower(e, now) : drawUnit(e, now);
+  for (const u of units.filter(u => u.air).sort((a, b) => a.y - b.y)) drawUnit(u, now);
+  for (const p of projectiles) {
+    if (p.kind === 'magic') { ctx.fillStyle = '#ad62f2'; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x - 1.5, p.y - 1.5, 1.8, 0, Math.PI * 2); ctx.fill(); }
+    else if (p.kind === 'snipe') { ctx.strokeStyle = COLORS[p.team]; ctx.lineWidth = 2.5; const a = Math.atan2(p.ty - p.y, p.tx - p.x); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - Math.cos(a) * 14, p.y - Math.sin(a) * 14); ctx.stroke(); }
+    else if (p.kind === 'snack') { ctx.font = '10px serif'; ctx.fillText('🍪', p.x, p.y); }
+    else if (p.kind === 'arrow') { const a = Math.atan2(p.ty - p.y, p.tx - p.x); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
+      ctx.strokeStyle = '#7a4a1e'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(3, 0); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(1, -2.5); ctx.lineTo(1, 2.5); ctx.fill();
+      ctx.fillStyle = COLORS[p.team]; ctx.fillRect(-10, -2, 3, 4); ctx.restore(); }
+    else { ctx.fillStyle = '#3d4654'; ctx.beginPath(); ctx.arc(p.x, p.y, 3.6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(p.x - 1, p.y - 1, 1.2, 0, Math.PI * 2); ctx.fill(); }
+  }
+  for (const f of fx) {
+    const k = f.t / f.dur;
+    if (f.kind === 'ring') {
+      ctx.strokeStyle = f.color; ctx.globalAlpha = 1 - k; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.4 + 0.6 * k), 0, Math.PI * 2); ctx.stroke();
+      if (f.fill) { ctx.fillStyle = f.color; ctx.globalAlpha = (1 - k) * 0.2; ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'p') {
+      ctx.fillStyle = f.color; ctx.globalAlpha = 1 - k;
+      ctx.beginPath(); ctx.arc(f.x, f.y, 3.2 * (1 - k) + 1, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const t of texts) {
+    const k = t.t / (t.big ? 1.4 : 0.8);
+    ctx.globalAlpha = 1 - k * k;
+    if (t.big) { ctx.font = `${28 + k * 22}px serif`; ctx.fillText(t.text, t.x, t.y - k * 34); }
+    else { ctx.font = '700 10px Fredoka, sans-serif'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.strokeText(t.text, t.x, t.y - k * 16); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y - k * 16); }
+  }
+  ctx.globalAlpha = 1;
+  for (const e of emotes) {
+    const bx = e.team === 'p' ? 238 : 238, by = e.team === 'p' ? 528 : 30, pop = Math.min(1, e.t * 8) * (e.t > 1.9 ? (2.2 - e.t) / 0.3 : 1);
+    const txt = e.text.length > 2, bw = txt ? 64 : 38;
+    ctx.save(); ctx.translate(bx, by); ctx.scale(pop, pop);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = COLORS[e.team]; ctx.lineWidth = 2;
+    rrect(-bw / 2, -16, bw, 32, 12); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-bw / 2 + 4, e.team === 'p' ? 8 : -8); ctx.lineTo(-bw / 2 - 8, e.team === 'p' ? 14 : -14); ctx.lineTo(-bw / 2 + 2, e.team === 'p' ? -2 : 2); ctx.fill();
+    ctx.font = txt ? '700 12px Fredoka' : '20px serif'; ctx.fillStyle = COLORS[e.team]; ctx.fillText(e.text, 0, 1);
+    ctx.restore();
+  }
+  if (ghost && selected !== null) {
+    const c = CARDS[hand[selected]], g = clampPlace(c, ghost.x, ghost.y);
+    ctx.globalAlpha = 0.55;
+    if (c.spell) {
+      ctx.strokeStyle = { bomb: '#ffae3a', nap: '#8f7cf2', hype: '#ff6a3d' }[c.spell]; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.arc(g.x, g.y, c.radius, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    } else {
+      face('p', 'p', g.x, g.y - c.s.r * 0.7, c.s.r * 0.95);
+      if (c.s.range > 40) { ctx.strokeStyle = 'rgba(63,123,242,.5)'; ctx.setLineDash([3, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(g.x, g.y, c.s.range, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+// =================== BATTLE UI ===================
+const handEl = $('hand'), pipsEl = $('pips');
+pipsEl.innerHTML = '<div class="pip"><i></i></div>'.repeat(10);
+const pipFills = [...pipsEl.querySelectorAll('i')];
+$('emotes').innerHTML = EMOTES.map(e => `<button class="${e.length > 2 ? 'txt' : ''}">${e}</button>`).join('');
+
+function renderHand() {
+  handEl.innerHTML = `<div class="next">${cardHTML(queue[0])}Next</div>` +
+    hand.map((k, i) => cardHTML(k, { cls: selected === i ? 'sel' : '', attrs: `data-i="${i}"` })).join('');
+}
+
+function banner(html) {
+  const b = $('banner'); b.innerHTML = html; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+}
+function emote(team, text) { emotes = emotes.filter(e => e.team !== team); emotes.push({ team, text, t: 0 }); }
+
+const fmt = t => { const s = Math.ceil(t); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function updateHud() {
+  $('eNum').textContent = Math.floor(energy);
+  pipFills.forEach((p, i) => p.style.transform = `scaleX(${Math.max(0, Math.min(1, energy - i))})`);
+  handEl.querySelectorAll('.card[data-i]').forEach(el => el.classList.toggle('poor', CARDS[hand[+el.dataset.i]].cost > energy));
+  const tm = $('timer');
+  $('timerVal').textContent = fmt(Math.max(0, time));
+  $('timerLbl').textContent = phase === 'overtime' ? 'Overtime' : time < 60 ? '2× Vibes' : 'Time left';
+  tm.classList.toggle('fast', time < 60 && phase === 'normal'); tm.classList.toggle('ot', phase === 'overtime');
+  for (const [id, n] of [['pCrw', crowns.p], ['eCrw', crowns.e]])
+    [...$(id).children].forEach((s, i) => s.classList.toggle('on', i < n));
+}
+
+function toArena(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H,
+           inside: e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom };
+}
+
+handEl.addEventListener('pointerdown', e => {
+  const el = e.target.closest('.card[data-i]'); if (!el || !running) return;
+  const i = +el.dataset.i;
+  selected = selected === i ? null : i;
+  renderHand();
+});
+addEventListener('pointermove', e => { if (!running) return; const p = toArena(e); ghost = p.inside ? p : null; });
+addEventListener('pointerup', e => {
+  if (!running || selected === null) return;
+  const p = toArena(e); if (!p.inside) return;
+  const key = hand[selected], c = CARDS[key];
+  if (c.cost > energy) { texts.push({ x: p.x, y: p.y, text: 'Not enough vibes!', t: 0, color: '#b45cf0' }); return; }
+  const g = clampPlace(c, p.x, p.y);
+  energy -= c.cost;
+  spawn(key, 'p', g.x, g.y);
+  hand[selected] = queue.shift(); queue.push(key);
+  selected = null; ghost = null; renderHand();
+});
+$('emoteBtn').onclick = () => $('emotes').classList.toggle('hide');
+$('emotes').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; emote('p', b.textContent); $('emotes').classList.add('hide');
+  if (Math.random() < 0.5) setTimeout(() => running && emote('e', ['😂', '😤', '👍', '🥲', '💀'][Math.random() * 5 | 0]), 900); });
+
+// =================== END ===================
+const QUIPS = {
+  win: ['Good Carter beat Evil Carter. Balance restored.', 'That was the most Carter thing ever.', 'Carter would be proud. Carter is proud.'],
+  lose: ['Evil Carter wins this round. Rematch?', 'You got out-Cartered.', 'Even Carter has off days.'],
+  draw: ['Carter vs Carter ends in a stalemate. Obviously.'],
+};
+function endGame() {
+  if (!running) return;
+  running = false; selected = null; $('emotes').classList.add('hide');
+  const res = crowns.p > crowns.e ? 'win' : crowns.p < crowns.e ? 'lose' : 'draw';
+  const before = arenaIdx();
+  const delta = res === 'win' ? 26 + crowns.p * 2 : res === 'lose' ? -Math.min(save.trophies, 18) : 0;
+  save.trophies += delta; save.best = Math.max(save.best, save.trophies);
+  if (res === 'win') save.wins++; if (res === 'lose') save.losses++;
+  persist();
+  const after = arenaIdx();
+  banner(res === 'win' ? 'Victory!' : res === 'lose' ? 'Defeat' : 'Draw');
+  $('result').textContent = { win: 'Victory!', lose: 'Defeat', draw: 'Draw' }[res]; $('result').className = 'result ' + res;
+  $('endP').innerHTML = [0, 1, 2].map(i => `<span class="${i < crowns.p ? 'on' : ''}">👑</span>`).join('');
+  $('endE').innerHTML = [0, 1, 2].map(i => `<span class="${i < crowns.e ? 'on' : ''}">👑</span>`).join('');
+  $('tDelta').textContent = `🏆 ${delta >= 0 ? '+' : ''}${delta}`;
+  $('tDelta').style.color = delta > 0 ? 'var(--gold-d)' : delta < 0 ? 'var(--red)' : 'var(--muted)';
+  $('quip').textContent = QUIPS[res][Math.random() * QUIPS[res].length | 0];
+  $('endHero').style.filter = res === 'lose' ? 'grayscale(1)' : '';
+  const newCards = ALL.filter(k => CARDS[k].arena > before && CARDS[k].arena <= after);
+  $('unlock').classList.toggle('hide', !newCards.length);
+  if (newCards.length) $('unlock').innerHTML = `🎉 New arena: <b>${ARENAS[after].name}</b><br>Unlocked ${newCards.map(k => CARDS[k].icon + ' ' + CARDS[k].short).join(', ')}`;
+  setTimeout(() => { if (!running) $('end').classList.remove('hide'); }, 1400);
+}
+$('endOk').onclick = () => {
+  $('end').classList.add('hide'); $('battle').classList.add('hide'); $('home').classList.remove('hide'); renderHome();
+};
+$('play').onclick = startBattle;
+
+renderHome();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
